@@ -1,56 +1,44 @@
+const fileInput = document.querySelector('#file');
+const copyText = document.querySelector('#copy-text');
+const imgResult = document.querySelector('#img-result');
+const convertedText = document.querySelector('#converted-text');
+const browseFileContainer = document.querySelector('.header');
+const resultSection = document.querySelector('.result');
 
-
-const img_url = document.querySelector('#img-url'),
-    upload_file_btn = document.querySelector('#upload-file-btn'),
-    copy_text = document.querySelector('#copy-text'),
-    img_result = document.querySelector('#img-result'),
-    converted_text = document.querySelector('#converted-text');
-
-
-img_url.onclick = () => {
-    img_url.select();
-}
-
-copy_text.onclick = () => {
-    copy_text.setAttribute('title', "Copied.");
+copyText.onclick = () => {
+    copyText.setAttribute('title', 'Copied.');
     setTimeout(() => {
-        copy_text.setAttribute('title', "Copy text.");
+        copyText.setAttribute('title', 'Copy text.');
     }, 2000);
 
-    if (converted_text.value != '') {
-        navigator.clipboard.writeText(converted_text.value);
+    if (convertedText.value !== '') {
+        navigator.clipboard.writeText(convertedText.value);
     }
-}
+};
 
-img_url.addEventListener('change', createFile);
-upload_file_btn.addEventListener('change', displayImage);
-
-async function createFile() {
-    if (this.value != '') {
-        img_result.src = this.value;
-
-        await fetch(this.value)
-            .then(res => res.blob())
-            .then(blob_file => {
-                let file = new File([blob_file], blob_file.name, { type: blob_file.type });
-                recognizeText(file);
-            })
-
-    }
-}
+fileInput.addEventListener('change', displayImage);
 
 function displayImage() {
     const reader = new FileReader();
+
     reader.onload = () => {
-        img_result.src = reader.result;
+        imgResult.src = reader.result;
+        browseFileContainer.style.display = 'none'; // Hide the "Browse File" container
+        resultSection.style.display = 'flex'; // Show the result section
+    };
+
+    if (this.files && this.files[0]) {
+        reader.readAsDataURL(this.files[0]);
+        recognizeText(this.files[0]);
     }
-    reader.readAsDataURL(this.files[0]);
-    recognizeText(this.files[0]);
 }
 
 function recognizeText(file) {
     Tesseract.recognize(file)
         .then(result => {
-            converted_text.value = result.text;
+            convertedText.value = result.text;
         })
+        .catch(error => {
+            console.error('Error recognizing text:', error);
+        });
 }
